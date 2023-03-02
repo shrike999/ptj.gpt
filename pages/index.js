@@ -1,57 +1,58 @@
 import Head from "next/head";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import styles from "./index.module.css";
-
+import { FiSend } from 'react-icons/fi';
 export default function Home() {
-  const [animalInput, setAnimalInput] = useState("");
-  const [result, setResult] = useState();
+  const messageInputRef = useRef()
+  const [chatHistory, setChatHistory] = useState([])
 
-  async function onSubmit(event) {
-    event.preventDefault();
-    try {
-      const response = await fetch("/api/generate", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ animal: animalInput }),
-      });
-
-      const data = await response.json();
-      if (response.status !== 200) {
-        throw data.error || new Error(`Request failed with status ${response.status}`);
+  async function handleSubmitMessage() {
+    const newUserMessage = messageInputRef.current.value
+    setChatHistory(prevChatHistory => [...prevChatHistory, {role: 'user', content: newUserMessage}])
+    if(newUserMessage !== ''){
+      try {
+        const response = await fetch("/api/generate", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ messages: [...chatHistory, {role: 'user', content: newUserMessage}] }),
+        });
+        const data = await response.json();
+        console.log(data);
+        setChatHistory(prevChatHistory => [...prevChatHistory, data.result.choices[0].message])
+      } catch (error) {
+        console.error(error)
       }
-
-      setResult(data.result);
-      setAnimalInput("");
-    } catch(error) {
-      // Consider implementing your own error handling logic here
-      console.error(error);
-      alert(error.message);
     }
   }
+
 
   return (
     <div>
       <Head>
-        <title>OpenAI Quickstart</title>
+        <title>PTJ.GPT</title>
         <link rel="icon" href="/dog.png" />
       </Head>
 
       <main className={styles.main}>
-        <img src="/dog.png" className={styles.icon} />
-        <h3>Name my pet</h3>
-        <form onSubmit={onSubmit}>
-          <input
-            type="text"
-            name="animal"
-            placeholder="Enter an animal"
-            value={animalInput}
-            onChange={(e) => setAnimalInput(e.target.value)}
-          />
-          <input type="submit" value="Generate names" />
-        </form>
-        <div className={styles.result}>{result}</div>
+        <ul className={styles.messageList}>
+          {
+            chatHistory.map(({role, content}, index) => (
+              <li key={index} className={role === 'user' ? styles.userMessage : styles.assistantMessage}>
+                <div >
+                {content}
+                </div>
+                </li>
+              ))
+          }
+        </ul>
+        <div className={styles.formSection}>
+          <textarea type={'content'} ref={messageInputRef} className={styles.userInput}/>
+          <button onClick={handleSubmitMessage} className={styles.submitButton}>
+            <FiSend/>
+          </button>
+        </div>
       </main>
     </div>
   );
