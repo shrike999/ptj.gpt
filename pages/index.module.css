@@ -17,7 +17,7 @@
 
 .main {
   margin: 0 auto;
-  width: 45vw;
+  max-width: 666px;
 }
 
 .messageList {
@@ -73,7 +73,7 @@
 }
 
 .formSection {
-  width: 40vw;
+  /* width: 40vw; */
   margin: 0 auto;
   display: flex;
   align-items: center;
