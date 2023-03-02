@@ -5,9 +5,19 @@ import { FiSend } from 'react-icons/fi';
 export default function Home() {
   const messageInputRef = useRef()
   const [chatHistory, setChatHistory] = useState([])
-
+  const [isFetchingResponse, setIsFetchingResponse] = useState(false)
   async function handleSubmitMessage() {
+    if(isFetchingResponse){
+      alert('Be patient')
+      return
+    }
     const newUserMessage = messageInputRef.current.value
+    if(newUserMessage === ''){
+      alert('Say something, pease')
+      return
+    }
+    setIsFetchingResponse(true)
+    messageInputRef.current.value = ''
     setChatHistory(prevChatHistory => [...prevChatHistory, {role: 'user', content: newUserMessage}])
     if(newUserMessage !== ''){
       try {
@@ -25,6 +35,7 @@ export default function Home() {
         console.error(error)
       }
     }
+    setIsFetchingResponse(false)
   }
 
 
