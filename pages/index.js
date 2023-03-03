@@ -1,11 +1,17 @@
 import Head from "next/head";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import styles from "./index.module.css";
 import { FiSend } from 'react-icons/fi';
 export default function Home() {
-  const messageInputRef = useRef()
+  const messageInputRef = useRef(null)
+  const chatWindowRef = useRef(null)
   const [chatHistory, setChatHistory] = useState([])
   const [isFetchingResponse, setIsFetchingResponse] = useState(false)
+  useEffect(() => {
+    const chatWindow = chatWindowRef.current;
+    chatWindow.scrollTop = chatWindow.scrollHeight;
+  }, [chatHistory])
+
   async function handleSubmitMessage() {
     if(isFetchingResponse){
       alert('Be patient')
@@ -16,9 +22,9 @@ export default function Home() {
       alert('Say something, pease')
       return
     }
-    setIsFetchingResponse(true)
     messageInputRef.current.value = ''
     setChatHistory(prevChatHistory => [...prevChatHistory, {role: 'user', content: newUserMessage}])
+    setIsFetchingResponse(true)
     if(newUserMessage !== ''){
       try {
         const response = await fetch("/api/generate", {
@@ -29,8 +35,9 @@ export default function Home() {
           body: JSON.stringify({ messages: [...chatHistory, {role: 'user', content: newUserMessage}] }),
         });
         const data = await response.json();
-        console.log(data);
-        setChatHistory(prevChatHistory => [...prevChatHistory, data.result.choices[0].message])
+        setChatHistory(prevChatHistory => {
+          return [...prevChatHistory, data.result.choices[0].message]
+        })
       } catch (error) {
         console.error(error)
       }
@@ -47,7 +54,7 @@ export default function Home() {
       </Head>
 
       <main className={styles.main}>
-        <ul className={styles.messageList}>
+        <ul className={styles.messageList} ref={chatWindowRef}>
           {
             chatHistory.map(({role, content}, index) => (
               <li key={index} className={role === 'user' ? styles.userMessage : styles.assistantMessage}>
